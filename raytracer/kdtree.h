@@ -2,7 +2,7 @@
 #define __RayTracer__kdtree__
 
 #include <stdio.h>
-#include "box_triangle.h"
+#include "triangle.h"
 
 struct SplitPlane {
     SplitPlane(const int axis, const float pos): axis(axis), pos(pos){};
