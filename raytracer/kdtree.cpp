@@ -17,7 +17,7 @@ void Node::traverse(Ray &ray, float t_min, float t_max)
         //float t_split = distanceAlongRayToPlane(ray);
         float t_split = (splitPlane.pos - ray.startPosition[splitPlane.axis]) * (ray.direction[splitPlane.axis] == 0 ? INFINITY : ray.inv_direction[splitPlane.axis]);
 
-        // near is the side containing the origin of the ray
+        // near代表含有光線原點(the origin of a ray)的那一側空間
         Node *near, *far;
         if(ray.startPosition[splitPlane.axis] < splitPlane.pos) {
             near = left;
@@ -101,9 +101,8 @@ void Node::SAH(const SplitPlane& p, const Box& V, int NL, int NR, int NP, float&
     }
 }
 
-// criterion for stopping subdividing a tree node
-inline bool Node::isDone(int N, float minCv) const {
-    // cerr << "terminate: minCv=" << minCv << ", KI*N=" << KI*N << endl;
+// 停下分割node的條件
+inline bool Node::isDone(int N, float minCv) const {    
     return(minCv > COST_INTERSECT*N);
 }
 
@@ -199,7 +198,7 @@ void Node::sortTriangles(const std::vector<Triangle*>& T, const SplitPlane& p, c
             else if(pside == RIGHT)
                 TR.push_back(t);
             else
-                std::cout << "ERROR WHILE SORTING TRIANLGES" << std::endl;
+                std::cout << "error occurs while sorting triangles" << std::endl;
         } else {
             if(tbox.min[p.axis] < p.pos)
                 TL.push_back(t);
@@ -212,14 +211,14 @@ void Node::sortTriangles(const std::vector<Triangle*>& T, const SplitPlane& p, c
 int maxdepth = 0;
 int nnodes = 0;
 Node* Node::RecBuild(std::vector<Triangle *> triangles, const Box &V, int depth, const SplitPlane& prev_plane){
-    ++nnodes; // DEBUG ONLY
-    if(depth > maxdepth) maxdepth = depth; // DEBUG ONLY
+    ++nnodes; // 用於debug
+    if(depth > maxdepth) maxdepth = depth; // 用於debug
 
     SplitPlane p;
     float Cp;
     PlaneSide pside;
     findPlane(triangles, V, depth, p, Cp, pside);
-    if(isDone(triangles.size(), Cp) || p == prev_plane) // NOT IN PAPER
+    if(isDone(triangles.size(), Cp) || p == prev_plane)
     {
         // Leaf node
         Node* leafnode = new Node();
@@ -230,7 +229,7 @@ Node* Node::RecBuild(std::vector<Triangle *> triangles, const Box &V, int depth,
         return leafnode;
     }
     Box VL, VR;
-    splitBox(V, p, VL, VR); // TODO: avoid doing this step twice
+    splitBox(V, p, VL, VR); // TODO: 避免重做
     std::vector<Triangle *> TL, TR;
     sortTriangles(triangles, p, pside, TL, TR);
     // Inner node
