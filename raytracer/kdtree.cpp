@@ -1,5 +1,4 @@
 #include "kdtree.h"
-
 #pragma mark - Traversal
 
 void Node::traverse(Ray &r){
