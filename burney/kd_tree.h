@@ -7,12 +7,18 @@ class Point{
   public:
 	double x[NUM_DIMS];
 };
+double distance(const Point &a,const Point &b){
+	double ans=0;
+	for(int i=0;i<NUM_DIMS;i++)ans+=(a.x[i]-b.x[i])*(a.x[i]-b.x[i]);
+	return ans;
+}
 class DataPoint:public Point{
+  public:
 	void *data=NULL;
 };
 struct Box{
 	Box(){}
-	Box(const Point &mn,const Point &mx):mn(mn),mx(mx){}
+	Box(const Point &_mn,const Point &_mx):mn(_mn),mx(_mx){}
 	Point mn,mx;
 	static Box get_box(const vector<Point>&s){
 		Point mn,mx;
@@ -22,6 +28,16 @@ struct Box{
 	}
 	static Box get_box(const vector<DataPoint>&s){return Box::get_box(vector<Point>(s.begin(),s.end()));}
 };
+double distance(const Point &a,const Box &b){
+	double ans=0;
+	for(int i=0;i<NUM_DIMS;i++){
+		double d=0;
+		if(a.x[i]<b.mn.x[i])d=b.mn.x[i]-a.x[i];
+		if(a.x[i]>b.mx.x[i])d=a.x[i]-b.mx.x[i];
+		ans+=d*d;
+	}
+	return ans;
+}
 struct Node{
 	Node *l=NULL,*r=NULL;
 	Box box;
@@ -45,24 +61,9 @@ class KD_tree{
 	}
   private:
 	Node *root=NULL;
-	double distance(const Point &a,const Point &b)const{
-		double ans=0;
-		for(int i=0;i<NUM_DIMS;i++)ans+=(a.x[i]-b.x[i])*(a.x[i]-b.x[i]);
-		return ans;
-	}
-	double distance(const Point &a,const Box &b)const{
-		double ans=0;
-		for(int i=0;i<NUM_DIMS;i++){
-			double d=0;
-			if(a.x[i]<b.mn.x[i])d=b.mn.x[i]-a.x[i];
-			if(a.x[i]>b.mx.x[i])d=a.x[i]-b.mx.x[i];
-			ans+=d*d;
-		}
-		return ans;
-	}
 	void query_nearst(Node const *o,const Point &target,DataPoint &result,bool result_assigned)const{
 		assert(o!=NULL);
-		if(result_assigned&&distance(target,result)<=distance(target,o->box))return;
+		if(result_assigned && distance(target,result)<=distance(target,o->box))return;
 		if(o->is_leaf()){result=o->data;return;}
 		int split_dim=o->split_dim;
 		double split_value=o->split_value;
@@ -77,6 +78,7 @@ class KD_tree{
 	void build_tree(Node* &o,vector<DataPoint>data,int split_dim){
 		assert(!data.empty());
 		o=new Node();
+		o->box=Box::get_box(data);
 
 		// leaf: assign data
 		if(data.size()==1){o->data=data[0];return;}
@@ -90,8 +92,7 @@ class KD_tree{
 		left_data.assign(data.begin(),mid);
 		rigt_data.assign(mid,data.end());
 
-		// l, r, box, split_dim, split_value
-		o->box=Box::get_box(data);
+		// l, r, split_dim, split_value
 		o->split_dim=split_dim;
 		o->split_value=(prev(mid)->x[split_dim]+mid->x[split_dim])/2;
 		build_tree(o->l,left_data,(split_dim+1)%NUM_DIMS);
