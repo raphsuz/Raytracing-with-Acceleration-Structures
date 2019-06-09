@@ -36,19 +36,20 @@ struct KD_tree{
 	void build_tree(Node* &o,vector<DataPoint>data,int split_dim){
 		if(data.empty()){o=NULL;return;}
 		o=new Node();
-		// leaf
-		// data
+
+		// leaf: assign data
 		if(data.size()==1){o->data=data[0];return;}
+
 		// not leaf
 		// sort data, take medium as split_value
 		sort(data.begin(),data.end(),[split_dim](const DataPoint &a,const DataPoint &b)->bool{
-				return a.x[split_dim]<b.x[split_dim];
-		});
+			return a.x[split_dim]<b.x[split_dim];});
 		const auto mid=data.begin()+data.size()/2;
 		vector<DataPoint>left_data,rigt_data;
 		left_data.assign(data.begin(),mid);
 		rigt_data.assign(mid,data.end());
-		// l,r,box,split_dim,split_value
+
+		// l, r, box, split_dim, split_value
 		o->box=Box::get_box(data);
 		o->split_dim=split_dim;
 		o->split_value=(prev(mid)->x[split_dim]+mid->x[split_dim])/2;
