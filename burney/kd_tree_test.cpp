@@ -12,18 +12,20 @@ DataPoint get_naive(const vector<DataPoint>&ps,const Point &target){
 	}
 	return ans;
 }
-KD_tree kd_tree;
-DataPoint get_kd_tree(const Point &target){
+DataPoint get_kd_tree(const KD_tree &kd_tree,const Point &target){
 	DataPoint ans;
 	kd_tree.query_nearst(target,ans);
 	return ans;
 }
-int main(){
+int main(int argc,char **argv){
+	if(argc!=2){clog<<"usage: "<<argv[0]<<" [num_points]"<<endl;return 0;}
 	mt19937 gen(chrono::steady_clock::now().time_since_epoch().count());
 	auto rand_dbl=bind(uniform_real_distribution<>(0,1),gen);
 //    for(int i=0;i<10;i++)cout<<rand_dbl()<<endl;
+	const int num_points=atoi(argv[1]);
+	clog<<"num_points = "<<num_points<<endl;
 	vector<DataPoint>ps;
-	for(int i=0;i<100000;i++){
+	for(int i=0;i<num_points;i++){
 		DataPoint p;
 		for(int j=0;j<NUM_DIMS;j++)p.x[j]=rand_dbl();
 		p.data=new int(i);
@@ -34,32 +36,37 @@ int main(){
 		for(int i=0;i<NUM_DIMS;i++)p.x[i]=rand_dbl();
 		const auto ans_naive=get_naive(ps,p);
 		cout<<"naive answer: "<<*((int*)ans_naive.data)<<", distance = "<<distance(p,ans_naive)<<endl;
+		KD_tree kd_tree;
 		kd_tree.build_tree(ps);
-		const auto ans_kd_tree=get_kd_tree(p);
+		const auto ans_kd_tree=get_kd_tree(kd_tree,p);
 		cout<<"kd_tree answer: "<<*((int*)ans_kd_tree.data)<<", distance = "<<distance(p,ans_kd_tree)<<endl;
 	}
-	const int num_case=1000;
 	cout<<"naive timing..."<<endl;
+	vector<int>ans_naive,ans_kd_tree;
 	{
 		auto time=steady_clock::now();
-		for(int t=0;t<num_case;t++){
-			Point p;
-			for(int i=0;i<NUM_DIMS;i++)p.x[i]=rand_dbl();
-			get_naive(ps,p);
+		vector<DataPoint>_;
+		for(int t=1;t<num_points;t++){
+			_.push_back(ps[t-1]);
+			ans_naive.push_back(*(int*)get_naive(_,ps[t]).data);
 		}
 		auto period=duration_cast<nanoseconds>(steady_clock::now()-time);
-		cout<<"takes average "<<double(period.count())*nanoseconds::period::num/nanoseconds::period::den*1000000/num_case<<" us."<<endl;
+		cout<<"takes "<<double(period.count())*nanoseconds::period::num/nanoseconds::period::den*1000<<" ms."<<endl;
 	}
 	cout<<"kd_tree timing..."<<endl;
 	{
 		auto time=steady_clock::now();
-		for(int t=0;t<num_case;t++){
-			Point p;
-			for(int i=0;i<NUM_DIMS;i++)p.x[i]=rand_dbl();
-			get_kd_tree(p);
+		KD_tree _;
+		for(int t=1;t<num_points;t++){
+			_.insert(ps[t-1]);
+			ans_kd_tree.push_back(*(int*)get_kd_tree(_,ps[t]).data);
 		}
 		auto period=duration_cast<nanoseconds>(steady_clock::now()-time);
-		cout<<"takes average "<<double(period.count())*nanoseconds::period::num/nanoseconds::period::den*1000000/num_case<<" us."<<endl;
+		cout<<"takes "<<double(period.count())*nanoseconds::period::num/nanoseconds::period::den*1000<<" ms."<<endl;
 	}
+	cout<<"verifying..."<<endl;
+	assert(ans_naive.size()==ans_kd_tree.size());
+	for(int i=0;i<(int)ans_naive.size();i++)assert(ans_naive[i]==ans_kd_tree[i]);
+	cout<<"ok!"<<endl;
 	return 0;
 }
