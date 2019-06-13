@@ -44,25 +44,45 @@ int main(int argc,char **argv){
 	cout<<"naive timing..."<<endl;
 	vector<int>ans_naive,ans_kd_tree;
 	{
-		auto time=steady_clock::now();
 		vector<DataPoint>_;
-		for(int t=1;t<num_points;t++){
-			_.push_back(ps[t-1]);
-			ans_naive.push_back(*(int*)get_naive(_,ps[t]).data);
+		{
+			auto time=steady_clock::now();
+			for(int t=1;t<num_points;t++){
+				_.push_back(ps[t-1]);
+				ans_naive.push_back(*(int*)get_naive(_,ps[t]).data);
+			}
+			auto period=duration_cast<nanoseconds>(steady_clock::now()-time);
+			cout<<"takes "<<double(period.count())*nanoseconds::period::num/nanoseconds::period::den*1000<<" ms."<<endl;
 		}
-		auto period=duration_cast<nanoseconds>(steady_clock::now()-time);
-		cout<<"takes "<<double(period.count())*nanoseconds::period::num/nanoseconds::period::den*1000<<" ms."<<endl;
+		{
+			auto time=steady_clock::now();
+			for(int t=0;t<10000;t++){
+				ans_naive.push_back(*(int*)get_naive(_,ps[t]).data);
+			}
+			auto period=duration_cast<nanoseconds>(steady_clock::now()-time);
+			cout<<"takes average "<<double(period.count())*nanoseconds::period::num/nanoseconds::period::den*1000000/10000<<" us."<<endl;
+		}
 	}
 	cout<<"kd_tree timing..."<<endl;
 	{
-		auto time=steady_clock::now();
 		KD_tree _;
-		for(int t=1;t<num_points;t++){
-			_.insert(ps[t-1]);
-			ans_kd_tree.push_back(*(int*)get_kd_tree(_,ps[t]).data);
+		{
+			auto time=steady_clock::now();
+			for(int t=1;t<num_points;t++){
+				_.insert(ps[t-1]);
+				ans_kd_tree.push_back(*(int*)get_kd_tree(_,ps[t]).data);
+			}
+			auto period=duration_cast<nanoseconds>(steady_clock::now()-time);
+			cout<<"takes "<<double(period.count())*nanoseconds::period::num/nanoseconds::period::den*1000<<" ms."<<endl;
 		}
-		auto period=duration_cast<nanoseconds>(steady_clock::now()-time);
-		cout<<"takes "<<double(period.count())*nanoseconds::period::num/nanoseconds::period::den*1000<<" ms."<<endl;
+		{
+			auto time=steady_clock::now();
+			for(int t=0;t<10000;t++){
+				ans_kd_tree.push_back(*(int*)get_kd_tree(_,ps[t]).data);
+			}
+			auto period=duration_cast<nanoseconds>(steady_clock::now()-time);
+			cout<<"takes average "<<double(period.count())*nanoseconds::period::num/nanoseconds::period::den*1000000/10000<<" us."<<endl;
+		}
 	}
 	cout<<"verifying..."<<endl;
 	assert(ans_naive.size()==ans_kd_tree.size());
