@@ -17,11 +17,13 @@ DataPoint get_kd_tree(const KD_tree &kd_tree,const Point &target){
 	kd_tree.query_nearst(target,ans);
 	return ans;
 }
-int main(){
+int main(int argc,char **argv){
+	if(argc!=2){clog<<"usage: "<<argv[0]<<" [num_points]"<<endl;return 0;}
 	mt19937 gen(chrono::steady_clock::now().time_since_epoch().count());
 	auto rand_dbl=bind(uniform_real_distribution<>(0,1),gen);
 //    for(int i=0;i<10;i++)cout<<rand_dbl()<<endl;
-	const int num_points=50000;
+	const int num_points=atoi(argv[1]);
+	clog<<"num_points = "<<num_points<<endl;
 	vector<DataPoint>ps;
 	for(int i=0;i<num_points;i++){
 		DataPoint p;

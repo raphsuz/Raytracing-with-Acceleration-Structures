@@ -47,10 +47,21 @@ struct Node{
 	DataPoint data;
 	bool is_leaf()const{return l==NULL&&r==NULL;}
 };
+Node *NewNode(){
+	return new Node();
+	const int chunk_size=1<<20;
+	static Node *chunk=NULL;
+	static int chunk_ptr=chunk_size;
+	if(chunk_ptr>=chunk_size){
+		chunk=new Node[chunk_size];
+		chunk_ptr=0;
+	}
+	return chunk+(chunk_ptr++);
+}
 class KD_tree_naive{
   public:
 	void build_tree(const vector<DataPoint>&data){
-		vector<DataPoint>data_copy;
+		static vector<DataPoint>data_copy;
 		data_copy.assign(data.begin(),data.end());
 		if(!data_copy.empty())build_tree(root,data_copy,0);
 	}
@@ -75,9 +86,9 @@ class KD_tree_naive{
 			query_nearst(o->l,target,result,true);
 		}
 	}
-	void build_tree(Node* &o,vector<DataPoint>data,int split_dim){
+	void build_tree(Node* &o,vector<DataPoint>&data,int split_dim){
 		assert(!data.empty());
-		o=new Node();
+		o=NewNode();
 		o->box=Box::get_box(data);
 
 		// leaf: assign data
@@ -89,6 +100,8 @@ class KD_tree_naive{
 			return a.x[split_dim]<b.x[split_dim];});
 		const double mid=(data.begin()+data.size()/2)->x[split_dim];
 		vector<DataPoint>left_data,rigt_data,mid_data;
+		left_data.reserve(data.size()/2);
+		rigt_data.reserve(data.size()-data.size()/2);
 		for(const auto &p:data)(p.x[split_dim]<mid?left_data:p.x[split_dim]>mid?rigt_data:mid_data).push_back(p);
 		for(const auto &p:mid_data)(left_data.size()<rigt_data.size()?left_data:rigt_data).push_back(p);
 
