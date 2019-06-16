@@ -145,7 +145,7 @@ namespace Poisson_sampling
             )
     {
         //minDist初值設定
-        if (minDist < 0.0f) {minDist = sqrt(float(NumPoints) / float(NumPoints));}
+        if (minDist < 0.0f) {minDist = sqrt(float(NumPoints)) / float(NumPoints);}
 
     std::vector<samplePoint> ActiveSamplePoints;
     std::vector<samplePoint> ProcessingList;
