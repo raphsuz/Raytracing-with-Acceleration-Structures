@@ -18,7 +18,6 @@
 #include "3d.h"
 
 using namespace std;
-const double PI = acos(-1);
 
 namespace Poisson_sampling
 {
@@ -36,7 +35,7 @@ namespace Poisson_sampling
 
         int RNGInt(int max)
         {
-            std::uniform_int_distribution<> disInt(0, Max);
+            std::uniform_int_distribution<> disInt(0, max);
             return disInt(gen);
         }
     private:
@@ -47,7 +46,7 @@ namespace Poisson_sampling
     struct samplePoint
     {
         samplePoint(): x(0), y(0), m_Verified(false){}
-        samplePoint(): x(X), y(Y), m_Verified(true){}
+        samplePoint(float X, float Y): x(X), y(Y), m_Verified(true){}
         float x;
         float y;
         bool m_Verified;
@@ -66,7 +65,10 @@ namespace Poisson_sampling
         int x;
         int y;
     };
-
+	
+	float getDistance(const samplePoint& P1, const samplePoint& P2) {return sqrt( (P1.x - P2.x) * (P1.x - P2.x) + (P1.y - P2.y) * (P1.y - P2.y) );}
+    sampleGridPoint ImageToGrid(const samplePoint P, float CellSize) {return sampleGridPoint( (int)(P.x / CellSize), (int)(P.y / CellSize));}
+	
     struct sampleGrid
     {
         sampleGrid(int Weight, int Height, float CellSize): m_W(Weight), m_H(Height), m_CellSize(CellSize)
@@ -111,7 +113,7 @@ namespace Poisson_sampling
     {
         const int Index = Generator.RNGInt(Points.size()-1);
         const samplePoint P = Points[Index];
-        Points.erase(Points.begin() + Idx);
+        Points.erase(Points.begin() + Index);
         return P;
     }
 
@@ -131,10 +133,7 @@ namespace Poisson_sampling
         float Y = P.x + sin(Angle) * Radius;
 
         return samplePoint(X, Y);
-    }
-
-    float getDistance(const samplePoint& P1, const samplePoint& P2) {return sqrt( (P1.x - P2.x) * (P1.x - P2.x) + (P1.y - P2.y) * (P1.y - P2.y) );}
-    sampleGridPoint ImageToGrid(const samplePoint P, float CellSize) {return sampleGridPoint( (int)(P.x / CellSize), (int)(P.y / CellSize));}
+    }    
 
     template <typename PRNG = c11RNG>
     std::vector<samplePoint> GeneratePoissonPoints(
@@ -152,7 +151,7 @@ namespace Poisson_sampling
     std::vector<samplePoint> ProcessingList;
 
     //grid
-    float CellSize = minDist / 2;
+    float CellSize = minDist / sqrt(2.0f);
     int GridW = (int)ceil(1.0f / CellSize);
     int GridH = (int)ceil(1.0f / CellSize);
 
@@ -160,16 +159,17 @@ namespace Poisson_sampling
 
     samplePoint StartingPoint;
     do {StartingPoint = samplePoint(Generator.RNGFloat(), Generator.RNGFloat());}
-    while (!(Circle ? StartingPoint.InCircle():StartingPoint.InRectangle()));
+    while (!(Circle ? StartingPoint.InCircle(): StartingPoint.InRectangle()));
 
     ProcessingList.push_back(StartingPoint);
     ActiveSamplePoints.push_back(StartingPoint);
     Grid.Insert(StartingPoint);
 
-    while(!ProcessingList.empty() && ActiveSm < NumPoints)
+    while(!ProcessingList.empty() && ActiveSamplePoints.size() < NumPoints)
     {
+#if POISSON_PROGRESS_SETUP
         if (ActiveSamplePoints.size() % 100 == 0) std::cout << ".";
-
+#endif //POISSON_PROGRESS_SETUP
         samplePoint Point = popRNG<PRNG>(ProcessingList, Generator);
         for (int i = 0; i < NewPointsCount; i++)
         {
@@ -184,7 +184,11 @@ namespace Poisson_sampling
             }
         }
     }
+#if POISSON_PROGRESS_SETUP
+    std::cout << std::endl << std::endl;
+#endif // POISSON_PROGRESS_SETUP
     return ActiveSamplePoints;
     }
 }
 // namespace Poisson_Sampling
+#endif
