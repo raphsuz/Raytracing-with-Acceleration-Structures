@@ -17,16 +17,14 @@
 #include <vector>
 #include "3d.h"
 
-using namespace std;
-
 namespace Poisson_sampling
 {
     class c11RNG
     {
     public:
-        c11RNG(): gen( std::random_device()() ), dis(0.0f, 1.0f)
+        c11RNG(): gen(std::random_device()()), dis(0.0f, 1.0f)
         {
-            gen.seed( time(nullptr) );
+            gen.seed(time(nullptr));
         }
 
         explicit c11RNG(uint32_t seed): gen(seed), dis(0.0f, 1.0f){}
@@ -85,7 +83,7 @@ namespace Poisson_sampling
         {
             sampleGridPoint G = ImageToGrid(P, CellSize);
             //檢查多少個鄰近samples
-            const int D = 125;
+            const int D = 25;
             //開始搜尋和鄰居samples的距離
             for (int i = G.x - D; i < G.x + D; i++)
             {
@@ -105,7 +103,7 @@ namespace Poisson_sampling
         int m_W;
         int m_H;
         float m_CellSize;
-        std::vector< std::vector<samplePoint> > m_Grid;
+        std::vector<std::vector<samplePoint>> m_Grid;
     };
 
     template <typename PRNG>
@@ -118,34 +116,34 @@ namespace Poisson_sampling
     }
 
     template <typename PRNG>
-    samplePoint GenerateSurroundingPoint(const samplePoint& P, float minDist, PRNG& Generator)
+    samplePoint GenerateRandomPointAround(const samplePoint& P, float MinDist, PRNG& Generator)
     {
         //non-uniform distribution
         float R1 = Generator.RNGFloat();
         float R2 = Generator.RNGFloat();
 
-        //Radius在D~2D之間
-        float Radius = (R1 + 1.0f) * minDist;
+        float Radius = MinDist * (R1 + 1.0f);
+
         float Angle = 2 * PI * R2;
 
-        //產生在(x, y)週遭的其它點
         float X = P.x + cos(Angle) * Radius;
-        float Y = P.x + sin(Angle) * Radius;
+        float Y = P.y + sin(Angle) * Radius;
 
         return samplePoint(X, Y);
-    }    
+    }
 
     template <typename PRNG = c11RNG>
     std::vector<samplePoint> GeneratePoissonPoints(
             size_t NumPoints,
             PRNG& Generator,
-            int NewPointsCount = 20,
+            int NewPointsCount = 30,
             bool Circle = true,
             float minDist = -1.0f
             )
     {
         //minDist初值設定
         if (minDist < 0.0f) {minDist = sqrt(float(NumPoints)) / float(NumPoints);}
+        std::cout << "minDist："<< minDist << std::endl;
 
     std::vector<samplePoint> ActiveSamplePoints;
     std::vector<samplePoint> ProcessingList;
@@ -158,8 +156,7 @@ namespace Poisson_sampling
     sampleGrid Grid(GridW, GridH, CellSize);
 
     samplePoint StartingPoint;
-    do {StartingPoint = samplePoint(Generator.RNGFloat(), Generator.RNGFloat());}
-    while (!(Circle ? StartingPoint.InCircle(): StartingPoint.InRectangle()));
+    do {StartingPoint = samplePoint(Generator.RNGFloat(), Generator.RNGFloat());} while (!(Circle ? StartingPoint.InCircle() : StartingPoint.InRectangle()));
 
     ProcessingList.push_back(StartingPoint);
     ActiveSamplePoints.push_back(StartingPoint);
@@ -167,14 +164,11 @@ namespace Poisson_sampling
 
     while(!ProcessingList.empty() && ActiveSamplePoints.size() < NumPoints)
     {
-#if POISSON_PROGRESS_SETUP
-        if (ActiveSamplePoints.size() % 100 == 0) std::cout << ".";
-#endif //POISSON_PROGRESS_SETUP
         samplePoint Point = popRNG<PRNG>(ProcessingList, Generator);
         for (int i = 0; i < NewPointsCount; i++)
         {
-            samplePoint NewPoint = GenerateSurroundingPoint(Point, minDist, Generator);
-            bool Fits = Circle ? NewPoint.InCircle() : NewPoint.InRectangle();
+            samplePoint NewPoint = GenerateRandomPointAround(Point, minDist, Generator);
+            bool Fits = Circle ? NewPoint.InRectangle() : NewPoint.InCircle();
             if (Fits && !Grid.IsAnyNeighbor(NewPoint, minDist, CellSize))
             {
                 ProcessingList.push_back(NewPoint);
@@ -184,9 +178,6 @@ namespace Poisson_sampling
             }
         }
     }
-#if POISSON_PROGRESS_SETUP
-    std::cout << std::endl << std::endl;
-#endif // POISSON_PROGRESS_SETUP
     return ActiveSamplePoints;
     }
 }
