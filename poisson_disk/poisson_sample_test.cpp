@@ -4,10 +4,7 @@
 #include <memory.h>
 #include "poisson_sample.h"
 
-#define POISSON_PROGRESS_SETUP 1
-
-const int SampleNum = 1000;
-const int ImageSize = 256;
+int ImageSize = 64;
 
 //調用bmp儲存
 #if defined( __GNUC__ )
@@ -114,6 +111,13 @@ void LoadDensityMap(const char* FileName)
 
 int main(int argc, char** argv)
 {
+    int SampleNum = 0;
+    std::cout << "請輸入欲選取的樣本數目(number)：" << std::endl;
+    std::cin >> SampleNum;
+    std::cout << "請輸入範圍尺寸的長度(正方形)：" << std::endl;
+    std::cin >> ImageSize;
+    std::cout << "欲選取的樣本數目為 " << SampleNum << " ，範圍尺寸為 " << ImageSize << " x " << ImageSize << " ，取樣中，請稍待片刻..." << std::endl;
+
     Poisson_sampling::c11RNG PRNG;
     const auto Points = Poisson_sampling::GeneratePoissonPoints(SampleNum, PRNG);
 
@@ -146,5 +150,6 @@ int main(int argc, char** argv)
         File << "X: " << p.x << ", Y: " << p.y << "\r\n" << std::endl;
     }
     std::cout << "取樣點存入Sample_List.txt"  << std::endl;
+
     return 0;
 }
