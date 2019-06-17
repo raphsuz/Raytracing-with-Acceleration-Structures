@@ -1,7 +1,9 @@
+#include <chrono>
 #include <vector>
 #include <iostream>
 #include <fstream>
 #include <memory.h>
+#include <time.h>
 #include "poisson_sample.h"
 
 int ImageSize = 64;
@@ -111,15 +113,29 @@ void LoadDensityMap(const char* FileName)
 
 int main(int argc, char** argv)
 {
-    int SampleNum = 0;
+    int SampleNum = 0.0f;
+    float minDist = -1.0f;
     std::cout << "請輸入欲選取的樣本數目(number)：" << std::endl;
     std::cin >> SampleNum;
     std::cout << "請輸入範圍尺寸的長度(正方形)：" << std::endl;
     std::cin >> ImageSize;
-    std::cout << "欲選取的樣本數目為 " << SampleNum << " ，範圍尺寸為 " << ImageSize << " x " << ImageSize << " ，取樣中，請稍待片刻..." << std::endl;
+    std::cout << "D value設定（0至1之間）：" << std::endl;
+    std::cin >> minDist;
+    std::cout << "欲選取的樣本數目為 " << SampleNum << " ，範圍尺寸為 " << ImageSize << " x " << ImageSize << std::endl;
+    std::cout << "最小距離："<< minDist << " ，取樣中，請稍待片刻..." << std::endl;
+
+    //計時開始
+    std::chrono::milliseconds three_milliseconds{3};
+    auto t1 = std::chrono::system_clock::now();
 
     Poisson_sampling::c11RNG PRNG;
-    const auto Points = Poisson_sampling::GeneratePoissonPoints(SampleNum, PRNG);
+    const auto Points = Poisson_sampling::GeneratePoissonPoints(SampleNum, PRNG, 30, 0, minDist);
+
+    //計時結束
+    auto t2 = std::chrono::system_clock::now();
+    std::cout << "取樣流程耗時總計："
+              << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()
+              << " milliseconds。" << std::endl;
 
     size_t DataSize = 3 * ImageSize * ImageSize;
     unsigned char* Img = new unsigned char[DataSize];
