@@ -104,8 +104,8 @@ float dot = std::max(0.0f, normal.dot(light_direction));
 }
 
 int main() {
-    int width = 400;
-    int height = 300;
+    int width = 800;
+    int height = 600;
     int num_samples = 64;
     Vec3 camera_origin(0, 0, -5);
     Sphere sphere(Vec3(0, 0, 0), 1.0);
